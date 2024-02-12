@@ -262,6 +262,179 @@ apisix:
 
   ssl:
     enabled: false
+    # -- The port with proxy protocol for http, it differs from node_listen and admin_listen.
+    listenHttpPort: 9181
+    # -- The port with proxy protocol for https
+    listenHttpsPort: 9182
+    # -- Enable the proxy protocol for tcp proxy, it works for stream_proxy.tcp option
+    tcp: true
+    # -- Enable the proxy protocol to the upstream server
+    upstream: true
+
+  # -- Enable Data Encryption
+  data_encryption:
+    enabled: false
+    # -- An array of 16 character strings used to encrypt/decrypt fields with AES-128-CBC
+    keyring: []
+
+  # -- Enable full customized config.yaml
+  enableCustomizedConfig: false
+  # -- If apisix.enableCustomizedConfig is true, full customized config.yaml.
+  # Please note that other settings about APISIX config will be ignored
+  customizedConfig: {}
+
+  image:
+    # -- Apache APISIX image repository
+    repository: apache/apisix
+    # -- Apache APISIX image pull policy
+    pullPolicy: IfNotPresent
+    # -- Apache APISIX image tag
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: 3.8.0-debian
+
+  # -- Use a `DaemonSet` or `Deployment`
+  kind: Deployment
+  # -- kind is DaemonSet, replicaCount not become effective
+  replicaCount: 1
+
+  # -- Set [priorityClassName](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for Apache APISIX pods
+  priorityClassName: ""
+  # -- Annotations to add to each pod
+  podAnnotations: {}
+  # -- Set the securityContext for Apache APISIX pods
+  podSecurityContext: {}
+    # fsGroup: 2000
+  # -- Set the securityContext for Apache APISIX container
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  # -- See https://kubernetes.io/docs/tasks/run-application/configure-pdb/ for more details
+  podDisruptionBudget:
+    # -- Enable or disable podDisruptionBudget
+    enabled: false
+    # -- Set the `minAvailable` of podDisruptionBudget. You can specify only one of `maxUnavailable` and `minAvailable` in a single PodDisruptionBudget.
+    # See [Specifying a Disruption Budget for your Application](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)
+    # for more details
+    minAvailable: 90%
+    # -- Set the maxUnavailable of podDisruptionBudget
+    maxUnavailable: 1
+
+  # -- Set pod resource requests & limits
+  resources: {}
+    # -- Use the host's network namespace
+
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  hostNetwork: false
+
+  # -- Node labels for Apache APISIX pod assignment
+  nodeSelector: {}
+  # -- List of node taints to tolerate
+  tolerations: []
+  # -- Set affinity for Apache APISIX deploy
+  affinity: {}
+  # -- Topology Spread Constraints for pod assignment spread across your cluster among failure-domains
+  # ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  topologySpreadConstraints: []
+
+  # -- timezone is the timezone where apisix uses.
+  # For example: "UTC" or "Asia/Shanghai"
+  # This value will be set on apisix container's environment variable TZ.
+  # You may need to set the timezone to be consistent with your local time zone,
+  # otherwise the apisix's logs may used to retrieve event maybe in wrong timezone.
+  timezone: ""
+
+  # -- extraEnvVars An array to add extra env vars
+  # e.g:
+  # extraEnvVars:
+  #   - name: FOO
+  #     value: "bar"
+  #   - name: FOO2
+  #     valueFrom:
+  #       secretKeyRef:
+  #         name: SECRET_NAME
+  #         key: KEY
+  extraEnvVars: []
+
+  # -- Set the readinessProbe for Apache APISIX pods
+  readinessProbe:
+    failureThreshold: 6
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    successThreshold: 1
+    tcpSocket:
+      port: &gatewayHttpContainerPort 9080
+    timeoutSeconds: 1
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+rbac:
+  create: false
+
+deployment:
+  # -- Apache APISIX deployment mode
+  # Optional: traditional, decoupled, standalone
+  #
+  # ref: https://apisix.apache.org/docs/apisix/deployment-modes/
+  mode: traditional
+
+  # -- Deployment role
+  # Optional: traditional, data_plane, control_plane
+  #
+  # ref: https://apisix.apache.org/docs/apisix/deployment-modes/
+  role: "traditional"
+
+gateway:
+  # -- Apache APISIX service type for user access itself
+  type: NodePort
+  # -- Setting how the Service route external traffic
+  # If you want to keep the client source IP, you can set this to Local.
+
+  # ref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+  externalTrafficPolicy: Cluster
+  # type: LoadBalancer
+  # annotations:
+  #   service.beta.kubernetes.io/aws-load-balancer-type: nlb
+  externalIPs: []
+  # -- Apache APISIX service settings for http
+  additionalContainerPorts: []
+  # - ip: 127.0.0.3           # Specific IP, If not set, the default value is `0.0.0.0`.
+  #   port: 9445
+  # -- Apache APISIX service settings for http
+  http:
+    enabled: true
+    servicePort: 80
+    containerPort: *gatewayHttpContainerPort
+    # -- Support multiple http ports, See [Configuration](https://github.com/apache/apisix/blob/0bc65ea9acd726f79f80ae0abd8f50b7eb172e3d/conf/config-default.yaml#L24)
+    additionalContainerPorts: []
+      # - port: 9081
+      #   enable_http2: true          # If not set, the default value is `false`.
+      # - ip: 127.0.0.2               # Specific IP, If not set, the default value is `0.0.0.0`.
+      #   port: 9082
+      #   enable_http2: true
+  # -- Apache APISIX service settings for tls
+  tls:
+    enabled: false
+    servicePort: 443
     containerPort: 9443
     # -- Support multiple https ports, See [Configuration](https://github.com/apache/apisix/blob/0bc65ea9acd726f79f80ae0abd8f50b7eb172e3d/conf/config-default.yaml#L99)
     additionalContainerPorts: []
