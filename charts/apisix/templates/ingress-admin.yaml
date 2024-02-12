@@ -60,7 +60,7 @@ spec:
           {{- range .paths }}
           - path: {{ . }}
             {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.Version }}
-            pathType: ImplementationSpecific
+            pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}-admin
