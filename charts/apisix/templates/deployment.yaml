@@ -148,6 +148,11 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
+            {{- range .Values.apisix.additionalContainerPorts }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: {{ .protocol }}
+            {{- end }}    
 
           {{- if ne .Values.apisix.deployment.role "control_plane" }}
           readinessProbe:
